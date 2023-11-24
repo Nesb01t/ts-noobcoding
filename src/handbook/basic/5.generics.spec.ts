@@ -78,7 +78,7 @@ test(`在泛型约束中使用类型参数`, () => {
   /**
    * 你可以声明一个类型参数，且它被另一个类型参数所约束
    * 我们希望获取一个对象给定属性名的值，我们确保我们不会获取 obj 上不存在的属性
-   * 所以简历一个约束
+   * 所以建立一个约束
    */
   function getProperty<T, K extends keyof T>(obj: T, key: K) {
     return obj[key]
