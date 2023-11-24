@@ -12,7 +12,8 @@ test(`数组 Array`, () => {
 
 test(`any 类型`, () => {
   const obj: any = {x: 0}
-  obj.foo()
+  // obj.foo() 这样当然会报错，但类型是 any 时，TS 就不会检查了
+
   // 当你不想写一个很长的类型代码，只是希望 TS 知道代码没有问题就可以用 any
   // 如果你开启了 noImplicityAny，被隐式推断为 any 时 TS 就会报错
 })
@@ -124,9 +125,10 @@ test(`接口 Interface`, () => {
 test(`类型断言 Type Assertions`, () => {
   // 当你知道 main-canvas 是一个 CanvasElement 但 TS 不知道
   // 你就可以使用类型断言了，像类型注解一样，类型断言也会被编译器移除，但不会影响任何运行时的行为
-  const myCanvas = document.getElementById('main-canvas') as HTMLCanvasElement
+  // const myCanvas = document.getElementById('main-canvas') as HTMLCanvasElement
+
   // 当然使用尖括号语法也是可以的
-  const anotherCanvas = <HTMLCanvasElement>document.getElementById('main-canvas')
+  //const anotherCanvas = <HTMLCanvasElement>document.getElementById('main-canvas')
 
   // TS 只允许类型断言转换为一个更具体或者更不具体的类型
   // 有的时候这条规则会显得保守，组织了你原本有效的类型转换，你可以使用双重断言
