@@ -53,3 +53,143 @@ test(`真值收窄 Truthiness narrowing`, () => {
     }
   }
 )
+
+test(`等值收窄 Equality narrowing`, () => {
+  // TS 会分析 == 和 != 操作符，如果操作数的类型是 string 或者 number，就会认为是一个等值收窄
+  function printAll(strs: string | string[] | null) {
+    if (strs != null) {
+      if (typeof strs === "object") {
+        for (const s of strs) {
+          console.log(s);
+        }
+      } else if (typeof strs === "string") {
+        console.log(strs);
+      }
+    }
+  }
+})
+
+test(`in 操作符收窄`, () => {
+  type Fish = { swim: () => void }
+  type Bird = { fly: () => void }
+  type Human = { swim?: () => void, fly?: () => void }
+
+  function move(animal: Fish | Bird | Human) {
+    if ("swim" in animal) {
+      return animal // Fish | Human
+    }
+    return animal // Bird | Human
+  }
+})
+
+test(`instanceof 收窄`, () => {
+  function logValue(x: Date | string) {
+    if (x instanceof Date) {
+      console.log(x.toUTCString())
+    } else {
+      console.log(x.toUpperCase())
+    }
+  }
+})
+
+test(`赋值语句 Assignments`, () => {
+  let x = Math.random() < 0.5 ? 10 : "hello world!"
+  // x: string | number
+})
+
+test(`控制流分析 Control flow analysis`, () => {
+  function prefix(prefix: number | string, input: string) {
+    if (typeof prefix === 'number') {
+      return new Array(prefix + 1).join(" ") + input
+    }
+    return prefix + input
+  }
+
+  /**
+   * 在第一个 if 语句中，因为有 return 语句
+   * 所以 TS 就可以判断出在剩余的部分 return prefix + input 中
+   * 如果 prefix 类型是 number 就无法到达这里了(unreachable)
+   * 所以在剩余的部分中就会把 number 类型从 number | string 中排除掉
+   */
+})
+
+test(`类型判断式 type predicates`, () => {
+  function isNum(x: number | string): x is number {
+    return typeof x === 'number'
+  }
+
+  /**
+   * 在这个例子中，x is number 就是一个类型谓词(type predicate)
+   * 但 x 必须是当前函数的参数名
+   * 当 isNum 被调用，TS 就可以进行收窄了
+   */
+
+  let x: number | string = "12";
+  if (isNum(x)) {
+    /**
+     * 当进行收窄的时候，如果所有可能的类型都穷尽了
+     * TS 会使用 never 类型来表示一个不可能存在的状态
+     */
+    console.log(x) // x: number -> never
+  } else {
+    console.log(x.toUpperCase()) // x: string
+  }
+})
+
+test(`可辨别的联合类型 Discriminated unions`, () => {
+  interface Circle {
+    kind: "circle"
+    radius: number
+  }
+
+  interface Square {
+    kind: "square"
+    sideLength: number
+  }
+
+  type Shape = Circle | Square
+
+  function getArea(shape: Shape) {
+    // return Math.PI * shape.radius ** 2 这样仍然会报错
+    if (shape.kind === "circle") {
+      // 通过 kind 收窄就不会了！即使判断的不是类型而是联合内部属性
+      return Math.PI * shape.radius ** 2
+    }
+    return shape.sideLength ** 2
+  }
+})
+
+test(`穷举检查 Exhaustiveness checking`, () => {
+  /**
+   * never 类型可以赋值给任何类型，然而没有类型可以赋值给 never
+   * 所以你可以在 switch 语句中做一个 never 穷举检查
+   */
+  interface Circle {
+    kind: "circle"
+    radius: number
+  }
+
+  interface Square {
+    kind: "square"
+    sideLength: number
+  }
+
+  type Shape = Circle | Square
+
+  function getArea(shape: Shape) {
+    switch (shape.kind) {
+      case "circle":
+        return Math.PI * shape.radius ** 2
+      case "square":
+        return shape.sideLength ** 2
+      default:
+        const _exhaustiveCheck: never = shape // never
+        return _exhaustiveCheck
+    }
+  }
+
+  /**
+   * 如果你给 Shape 再联合一个 Triangle 那么 default 就会报错了
+   * 因为他会收窄到 Triangle 而不是 never！
+   */
+})
